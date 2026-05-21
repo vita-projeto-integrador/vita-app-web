@@ -79,12 +79,12 @@ export const DialogUploadImagesForAnalysis = () => {
                     <ProgressBar range={maxImages + 1} stage={images.length} />
 
                     <DialogHeader>
-                        <DialogTitle>{images.length} Fazer upload de imagens</DialogTitle>
+                        <DialogTitle>Fazer upload de imagens</DialogTitle>
                     </DialogHeader>
                     <DialogDescription>Escolha 4 imagens de posições diferentes do mesmo fruto ou folha</DialogDescription>
 
                     <div className="w-full h-fit flex flex-col items-center gap-4 p-6 border-2 border-dashed border-chart-1 rounded-lg bg-slate-50 ">
-                        <Button asChild className="flex" variant={images.length <= maxImages ? "default" : "ghost"} >
+                        <Button asChild className="flex" variant={images.length <= maxImages ? "default" : "ghost"}>
                             <label htmlFor="file1" className="gap-3" >
                                 <SearchIcon className="w-5" />Procurar neste computador
                             </label>
@@ -101,7 +101,7 @@ export const DialogUploadImagesForAnalysis = () => {
                                 <div key={i} className={`w-20 h-20 relative rounded-lg overflow-hidden bg-slate-200 ${images[i] !== undefined && "active:scale-95 group"}`}>
                                     {
                                         images[i] !== undefined && ( // Botão de exlcuir a imagem
-                                            <button onClick={() => deleteImage(i)} className="p-1 absolute flex flex-col justify-center items-center w-5 h-5 right-2 top-2 bg-foreground/55 text-white rounded-md transition-all z-10 group-hover:w-20 group-hover:h-20 group-hover:top-0 group-hover:right-0">
+                                            <button onClick={() => deleteImage(i)} className="p-1 absolute flex flex-col justify-center items-center w-5 h-5 right-2 top-2 bg-foreground/55 text-white cursor-pointer rounded-md transition-all z-10 group-hover:w-20 group-hover:h-20 group-hover:top-0 group-hover:right-0">
                                                 <TrashIcon className="w-5 h-5"/>
                                             </button>
                                         )
