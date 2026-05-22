@@ -5,11 +5,11 @@ import { AppSidebar } from "@/components/layout/app/app-sidebar";
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode; }>) {
     return (
         <SidebarProvider>
-                <AppSidebar />
+            <AppSidebar />
 
-                <SidebarInset className="bg-slate-100">
-                    {children}
-                </SidebarInset>
+            <SidebarInset className="bg-slate-100 h-screen">
+                {children}
+            </SidebarInset>
         </SidebarProvider>
     );
 }

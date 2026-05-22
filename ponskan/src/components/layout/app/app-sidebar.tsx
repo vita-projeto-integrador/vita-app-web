@@ -11,9 +11,15 @@ import { usePathname } from "next/navigation"
 import { deleteSession } from "@/actions/session"
 import Cookie from "js-cookie"
 
+interface UserData{
+  name: string
+  email: string
+}
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const userCookie = Cookie.get('userPonskan') // Pegar o Cookie
-  const userData = userCookie ? JSON.parse(userCookie) : null // Verifica se não é null
+  const userData : UserData = userCookie ? JSON.parse(userCookie) : {} // Verifica se não é null
+  const placeholderAvatar = userData.name !==undefined ? userData.name.slice(0, 2) : "US"
 
   const path = usePathname()
 
@@ -103,12 +109,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <SidebarMenuButton size="lg">
                     <Avatar>
                       <AvatarImage />
-                      <AvatarFallback>US</AvatarFallback>
+                      <AvatarFallback suppressHydrationWarning>{placeholderAvatar}</AvatarFallback>
                     </Avatar>
 
                     <div className="flex flex-col">
-                      <p className="font-semibold">{/* userData.name */}</p>
-                      <p className="font-light">{/* userData.email */}</p>
+                      <p className="font-semibold" suppressHydrationWarning>{userData.name}</p>
+                      <p className="font-light" suppressHydrationWarning>{userData.email}</p>
                     </div>
                   </SidebarMenuButton>
                 </DropdownMenuTrigger>

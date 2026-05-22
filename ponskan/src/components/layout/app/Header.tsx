@@ -11,7 +11,7 @@ const namePage = () => {
   let pageName
 
   switch (path){
-    case "/":
+    case "/app":
       pageName = "Dashboard"
       break
     case "/app/analysis":
@@ -27,9 +27,13 @@ const namePage = () => {
   return pageName
 }
 
-export const Header = () => {
+type Props = {
+  className?: string
+}
+
+export const Header = ({className} : Props) => {
   return (
-    <header className="flex h-16 shrink-0 items-center gap-3 border-b p-4 select-none bg-white">
+    <header className={`flex h-16 shrink-0 items-center gap-3 border-b p-4 select-none bg-white ${className}`}>
       <SidebarTrigger />
       <Separator orientation="vertical" />
       <h1 className="font-semibold ml-1">{namePage()}</h1>

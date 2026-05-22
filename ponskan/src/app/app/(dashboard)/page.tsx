@@ -29,61 +29,63 @@ const chartConfig = {
 
 export default function Page() {
   return (
-    <div className="min-h-full ">
+    <>
       <Header />
+      
+      <div className="flex flex-col h-full overflow-y-scroll p-6 gap-6">
+        <div className="flex gap-4 flex-wrap">
+          <KPI description="Fotos analizadas" percent={7.5} value={96} period="Últimos 7 dias" trend="increasing" />
+          <KPI description="Doença confirmada" percent={7.5} value={5} period="Últimos 7 dias" trend="increasing" />
+          <KPI description="Focos de contaminação" percent={7.5} value={2} period="Últimos 7 dias" trend="stable" reverse />
+          <KPI description="Tarefas pendentes" percent={7.5} value={12} period="Últimos 7 dias" trend="increasing" reverse />
+          <KPI description="Índice de qualidade (%)" percent={1.5} value={89} period="Últimos 7 dias" trend="increasing" />
+        </div>
 
-      <div className="flex px-6 pt-6 pb-4 gap-4 flex-wrap">
-        <KPI description="Fotos analizadas" percent={7.5} value={96} period="Últimos 7 dias" trend="increasing" />
-        <KPI description="Doença confirmada" percent={7.5} value={5} period="Últimos 7 dias" trend="increasing" />
-        <KPI description="Focos de contaminação" percent={7.5} value={2} period="Últimos 7 dias" trend="stable" reverse />
-        <KPI description="Tarefas pendentes" percent={7.5} value={12} period="Últimos 7 dias" trend="increasing" reverse />
-        <KPI description="Índice de qualidade (%)" percent={1.5} value={89} period="Últimos 7 dias" trend="increasing" />
+        <div className="flex">
+          <Card>
+            <CardHeader>
+              <CardTitle>Análises de frutos</CardTitle>
+              <CardDescription>Últimos 7 dias</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer config={chartConfig}>
+                <BarChart accessibilityLayer data={chartData}>
+                  <CartesianGrid vertical={false} />
+                  <XAxis
+                    dataKey="day"
+                    tickLine={false}
+                    tickMargin={10}
+                    axisLine={false}
+                    tickFormatter={(value) => value.slice(0, 3)}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+                  <ChartLegend content={<ChartLegendContent />} />
+                  <Bar
+                    dataKey="analise"
+                    stackId="a"
+                    fill="var(--primary)"
+                    radius={[0, 0, 4, 4]}
+                  />
+                  <Bar
+                    dataKey="doenca"
+                    stackId="a"
+                    fill="var(--chart-1)"
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              </ChartContainer>
+            </CardContent>
+            <CardFooter className="flex-col items-start gap-2 text-sm">
+              <div className="flex gap-2 leading-none font-medium">
+                Resumo da análise de frutos e confirmação da doença
+              </div>
+              <div className="leading-none text-muted-foreground">
+                Total no periodo dos últimos 7 dias
+              </div>
+            </CardFooter>
+          </Card>
+        </div>
       </div>
-
-      <div className="flex pl-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Análises de frutos</CardTitle>
-            <CardDescription>Últimos 7 dias</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig}>
-              <BarChart accessibilityLayer data={chartData}>
-                <CartesianGrid vertical={false} />
-                <XAxis
-                  dataKey="day"
-                  tickLine={false}
-                  tickMargin={10}
-                  axisLine={false}
-                  tickFormatter={(value) => value.slice(0, 3)}
-                />
-                <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-                <ChartLegend content={<ChartLegendContent />} />
-                <Bar
-                  dataKey="analise"
-                  stackId="a"
-                  fill="var(--primary)"
-                  radius={[0, 0, 4, 4]}
-                />
-                <Bar
-                  dataKey="doenca"
-                  stackId="a"
-                  fill="var(--chart-1)"
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
-            </ChartContainer>
-          </CardContent>
-          <CardFooter className="flex-col items-start gap-2 text-sm">
-            <div className="flex gap-2 leading-none font-medium">
-              Resumo da análise de frutos e confirmação da doença
-            </div>
-            <div className="leading-none text-muted-foreground">
-              Total no periodo dos últimos 7 dias
-            </div>
-          </CardFooter>
-        </Card>
-      </div>
-    </div>
+    </>
   )
 }
