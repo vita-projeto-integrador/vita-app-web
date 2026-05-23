@@ -1,4 +1,4 @@
-import { ProcessProvider } from "@/context/ProcessesProvider"
+"use client"
 
 export default function Page () {
     return(

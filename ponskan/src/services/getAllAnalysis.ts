@@ -31,7 +31,7 @@ interface AnalysisError { // Padrão de resposta de erro da API
     data: []
 }
 
-export const requestAnalyses = async (page: number) : Promise<Analysis | AnalysisError>=> {
+export const getAllAnalysis = async (page: number) : Promise<Analysis | AnalysisError>=> {
     if (page < 1 || !page) return { // Retorno em caso de problema com número de pagina
             success: false,
             message: "Página inválida",

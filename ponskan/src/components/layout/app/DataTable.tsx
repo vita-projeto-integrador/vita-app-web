@@ -5,7 +5,7 @@ import { flexRender, getCoreRowModel, useReactTable, type ColumnDef, } from "@ta
 import { ChevronLeft, ChevronRight, RefreshCcwIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table"
-import { requestAnalyses } from "@/services/requestAnalyses"
+import { getAllAnalysis } from "@/services/getAllAnalysis"
 
 // 1. Definição simples das colunas (Exemplo com ID e Título)
 const columns: ColumnDef<any>[] = [
@@ -52,7 +52,7 @@ export function DataTable() {
 
     const carregarDadosDaAPI = async () => {
         try {
-            const response = await requestAnalyses(pagination.pageIndex > 0 ? pagination.pageIndex : 1)
+            const response = await getAllAnalysis(pagination.pageIndex > 0 ? pagination.pageIndex : 1)
 
             let filterResponse
             // Filtrando os dados da API para melhor exibição no front
