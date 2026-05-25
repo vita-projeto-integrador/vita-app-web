@@ -17,9 +17,9 @@ import { LogoCurrentColor } from "@/assets/icons/LogoCurrentColor";
 export default function Login() {
     const router = useRouter()
 
-    const form = useForm<LoginData>({
+    const form = useForm<LoginData>({ // Configurações do react-hook-form
         mode: "onBlur",
-        resolver: zodResolver(loginSchema),
+        resolver: zodResolver(loginSchema), // Usar a validação de campos do zod
         defaultValues: {
             email: "",
             password: ""
@@ -32,11 +32,11 @@ export default function Login() {
         const response = await loginUser(data)
 
         if (response.success) {
-            await saveSession({
-                token: response.token, 
-                name: response.user?.name, 
-                email: response.user?.email, 
-                userId: response.user?.id
+            await saveSession({ // Salvar no cookie
+                token: response.data.token, 
+                name: response.data.user.name, 
+                email: response.data.user.email, 
+                userId: response.data.user.id
             })
 
             router.push('/app')

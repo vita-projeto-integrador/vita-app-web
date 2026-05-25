@@ -19,19 +19,19 @@ interface AnalysisData { // Dados individuaids de cada análise
     }
 }
 
-interface Analysis { // Padrão de resposta da API
+interface Success { // Padrão de resposta da API
     success: true
     message: string
     data: AnalysisData[]
 }
 
-interface AnalysisError { // Padrão de resposta de erro da API
+interface Error { // Padrão de resposta de erro da API
     success: false
     message: string
     data: []
 }
 
-export const getAllAnalysis = async (page: number) : Promise<Analysis | AnalysisError>=> {
+export const getAllAnalysis = async (page: number) : Promise<Success | Error>=> {
     if (page < 1 || !page) return { // Retorno em caso de problema com número de pagina
             success: false,
             message: "Página inválida",
@@ -39,7 +39,7 @@ export const getAllAnalysis = async (page: number) : Promise<Analysis | Analysis
         } 
 
     try {
-        const response = await api.get<Analysis>("analysis", {
+        const response = await api.get<Success>("analysis", {
             params: { page: page }
         })
         const res = response.data // Encurtando o caminho
@@ -49,12 +49,11 @@ export const getAllAnalysis = async (page: number) : Promise<Analysis | Analysis
             message: res.message,
             data: res?.data || []
         }
-    } catch (error: unknown) { // unknown para atender ao retorno esperado Promise<Analysis | AnalysisError>
+    } catch (error: unknown) { // unknown para atender ao retorno esperado Promise<Success | Error>
         let message = "Erro inesperado na requisição"
 
         if (axios.isAxiosError(error)) { // Verifica se error é veio do axios
-            // Caso positivo pega a resposta customizada da API e sobreescreve apiMessage
-            // Se requisição não conseguir retornar com a resposta devolve o erro de conexão do axios 
+        // Verifica se axios mandou error | Salva a mensagem personalizada que a API || Salva mensagem padrão do axios 
             message = error.response?.data.message || error.message 
         }
 

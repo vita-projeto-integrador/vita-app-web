@@ -25,8 +25,8 @@ interface UploadImageError {
     data: {}
 }
 
-const uploapImagesForAnalyse = async (files: FormData) : Promise<UploadImage | UploadImageError> => {
-    if (!files) return {
+export const uploapImagesForAnalyse = async (files: FormData) : Promise<UploadImage | UploadImageError> => {
+    if (!files) return { // Retorno ao ter problema com idAnalyse
         success: false,
         status: 400,
         message: "Sem imagens",
@@ -37,7 +37,7 @@ const uploapImagesForAnalyse = async (files: FormData) : Promise<UploadImage | U
         const response = await api.post<UploadImage>("/analysis", files, {
             headers: { "Content-Type": "multipart/form-data", }
         })
-        const res = response.data // encurtar o chamado
+        const res = response.data  // Encurtador
 
         return {
             success: true,
@@ -45,10 +45,10 @@ const uploapImagesForAnalyse = async (files: FormData) : Promise<UploadImage | U
             message: res?.message,
             data: res?.data || {}
         }
-    } catch(error: unknown) {
+    } catch(error: unknown) { // unknown para atender ao retorno esperado Promise<Analysis | AnalysisError>
         let messageApi = "Erro ao fazer upload"
-
-        if(axios.isAxiosError(error)) {
+        if(axios.isAxiosError(error)) { // Verifica se error é veio do axios
+            // Verifica se axios mandou error | Salva a mensagem personalizada que a API || Salva mensagem padrão do axios 
             messageApi = error.response?.data.message || error.message
         }
 
@@ -60,5 +60,3 @@ const uploapImagesForAnalyse = async (files: FormData) : Promise<UploadImage | U
         }
     }
 }
-
-export { uploapImagesForAnalyse }

@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers"
 
-type SessionProps = {
+interface SessionProps {
   token: string,
   userId: string,
   name: string,

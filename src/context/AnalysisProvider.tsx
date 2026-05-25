@@ -1,32 +1,44 @@
 "use client"
 
-import React, { createContext } from "react"
+import React, { createContext, } from "react"
+import { useState, useEffect, } from "react"
+import { getOneAnalysis, } from "@/services/getOneAnalysis"
+import { Success } from "@/services/getOneAnalysis"
 
 export const Analysis = createContext({
-  idAnalysis: "",
-  setIdAnalysis: (id: string) => {},
-  dataAnalysis: {},
-  isCompleted: false
+	setIdAnalysis: (id: string) => { },
+	dataAnalysis: {},
 })
 
-export function AnalysisProvider({children} : {children: React.ReactNode}) {
 
-  const isCompleted = (idAnalysis: string) : boolean => {
+export function AnalysisProvider({ children }: { children: React.ReactNode }) {
+	const [idAnalysis, setIdAnalysis] = useState("")
+	const [dataAnalysis, setDataAnalysis] = useState({})
+	const [isCompleted, setIsCompleted] = useState(true)
 
-    if(idAnalysis == '') return true
-    else return false
-  }
+	const GetAnalysis = async () => {
+		if (idAnalysis === "") return
 
+		const response = await getOneAnalysis(idAnalysis)
 
+		if(response.success) {
+			setDataAnalysis(response.data)
+		}
+	}
 
-  return (
-    <Analysis.Provider value={{
-      setIdAnalysis: (id: string)=> {},
-      
-      }}>
-      {children}
-    </Analysis.Provider>
-  )
+	useEffect(() => {
+		GetAnalysis()
+
+	}, [idAnalysis])
+
+	return (
+		<Analysis.Provider value={{
+			setIdAnalysis: (id: string) => setIdAnalysis(id),
+			dataAnalysis: dataAnalysis,
+		}}>
+			{children}
+		</Analysis.Provider>
+	)
 }
 
 /*

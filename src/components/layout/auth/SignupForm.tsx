@@ -37,8 +37,9 @@ const maxRange = FORM_STEPS.length - 1
 export const SignupForm = () => {
     const router = useRouter()
     const [stage, setStage] = useState(0)
+    const [isSubmitting, setIsSubmiting] = useState(false)
 
-    const form = useForm<SignUpData>({
+    const form = useForm<SignUpData>({ // Configurações do react-hook-form
         shouldUnregister: false,
         resolver: zodResolver(signUpSchema),
         mode: "onSubmit", //  Só valida no clique do botão
@@ -51,7 +52,7 @@ export const SignupForm = () => {
         }
     })
 
-    const { handleSubmit, trigger, watch, setValue, clearErrors, formState: { isSubmitting } } = form
+    const { handleSubmit, trigger, watch, setValue, clearErrors } = form
     const isStudent = watch("isStudent")
 
     useEffect(() => {
@@ -62,26 +63,27 @@ export const SignupForm = () => {
         }
     }, [isStudent, setValue, clearErrors]);
 
-    const increaseValue = async () => {
-        const fields = FORM_STEPS[stage].fields
-        const isValid = stage < maxRange && await trigger(fields)
+    const increaseValue = async () => { // Aumentar contador de etapas
+        const fields = FORM_STEPS[stage].fields // Pegar o name dos inputs da etapa atual do formulário
+        const isValid = stage < maxRange && await trigger(fields) // Acionar o trigger (verificação) dos inputs atuais
 
-        if (isValid) setStage((prev) => Math.min(prev + 1, maxRange))
+        if (isValid) setStage((prev) => Math.min(prev + 1, maxRange)) // Acrescentar valor com verifiação se está no final do array
     }
 
-    const decreaseValue = () => {
+    const decreaseValue = () => { // Aumentar contador de etapas
         setStage((prev) => Math.max(prev - 1, 0))
     }
 
     const onSubmit = async (data: SignUpData) => {
+        setIsSubmiting(true)
         const response = await createUser(data)
         
-        if (response.success && response.token != undefined) {
-            await saveSession({
-                token: response.token, 
-                name: response.user?.name, 
-                email: response.user?.email, 
-                userId: response.user.id
+        if (response.success && response.data.token != undefined) {
+            await saveSession({ // Salvar no cookie
+                token: response.data.token, 
+                name: response.data.user.name, 
+                email: response.data.user.email, 
+                userId: response.data.user.id
             })
 
             router.push('/app')
