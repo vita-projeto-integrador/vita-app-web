@@ -36,7 +36,7 @@ export const SheetDetailsAnalysis = ( { data, isOpen = false, onOpenChange} : Pr
                     <SheetDescription>Mais informações sobre a análise</SheetDescription>
                 </SheetHeader>
 
-                <div className="flex flex-col p-4 gap-4 w-full h-full bg-slate-50">
+                <div className="flex flex-col p-4 gap-4 w-full h-full bg-slate-50 overflow-y-auto">
                     <div className="flex flex-col gap-4 p-4 bg-white rounded-xl border border-slate-100">
                         <div className="flex items-center border-b border-slate-100 pb-3">
                             <div className="flex flex-col gap-1">

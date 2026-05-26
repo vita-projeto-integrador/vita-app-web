@@ -2,16 +2,17 @@
 
 import { useEffect, useState, } from "react"
 import { flexRender, getCoreRowModel, useReactTable, type ColumnDef, } from "@tanstack/react-table"
-import { ChevronLeft, ChevronRight, RefreshCcwIcon } from "lucide-react"
+import { ChevronLeft, ChevronRight, RefreshCcwIcon, } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
 import { SheetDetailsAnalysis } from "./SheetDetailsAnalysis"
 import { getAllAnalysis } from "@/services/getAllAnalysis"
 import { getOneAnalysis } from "@/services/getOneAnalysis"
 import { setTimeout } from "timers"
 import { DataAnalysis } from "./SheetDetailsAnalysis"
 
-// 1. Definição simples das colunas (Exemplo com ID e Título)
+// Definição simples das colunas
 const columns: ColumnDef<any>[] = [
     {
         accessorKey: "id",
@@ -28,6 +29,11 @@ const columns: ColumnDef<any>[] = [
     {
         accessorKey: "classe",
         header: "Doença",
+        cell: ({ getValue }) => {
+            const classe = getValue<string>()
+
+            return classe === "true" ?  <Badge variant="destructive">Detectado</Badge> : <Badge variant="outline">Não detectado</Badge> 
+        }
     },
     {
         accessorKey: "confianca",
@@ -44,14 +50,12 @@ export function DataTable() {
     const [isLoading, setIsLoading] = useState(false)
     const [isOpen, setIsOpen] = useState(false)
     const [analysisDetails, setAnalysisDetails] = useState<DataAnalysis>()
-
-    // Estado apenas para controlar o índice da página (começa na 0)
-    const [pagination, setPagination] = useState({
+    const [pagination, setPagination] = useState({ // Controla índice da página
         pageIndex: 0,
-        pageSize: 20, // <--- NÚMERO FIXO DE ELEMENTOS POR TELA
+        pageSize: 20, // Elementos fixos por tela
     })
 
-    const carregarDadosDaAPI = async () => {
+    const loadData = async () => {
         setIsLoading(true)
 
         try {
@@ -59,19 +63,18 @@ export function DataTable() {
             if (!response.success) return
 
             let filterResponse
-                filterResponse = response.data.map(item => {
-                    return {
-                        idAnalysis: item.id, // Para getOneAnalysis
-                        id: item.id.slice(0, 4),
-                        status: item.status,
-                        imagesCount: item.imagesCount.toString(),
-                        confianca: `${(item.classificacao.confianca * 100).toString()}%` || "indeterminado",
-                        classe: item.classificacao.classe,
-                        // tempo_execucao: `${(item.classificacao.tempo_execucao / 1000).toFixed(2)} sec`,
-                        createdAt: (item.classificacao.createdAt).slice(0, 10).replace(/(\d{4})-(\d{2})-(\d{2})/, '$3/$2/$1')
-                    }
-                }) 
-            
+            filterResponse = response.data.map(item => {
+                return {
+                    idAnalysis: item.id, // Para getOneAnalysis
+                    id: item.id.slice(0, 4),
+                    status: item.status,
+                    imagesCount: item.imagesCount.toString(),
+                    confianca: `${(item.classificacao.confianca * 100).toString()}%` || "indeterminado",
+                    classe: item.classificacao.classe,
+                    createdAt: (item.classificacao.createdAt).slice(0, 10).replace(/(\d{4})-(\d{2})-(\d{2})/, '$3/$2/$1')
+                }
+            })
+
 
             // Filtrando os dados da API para melhor exibição no front
 
@@ -85,7 +88,7 @@ export function DataTable() {
         const timer = setTimeout(() => {
             setIsLoading(false)
         }, 3000)
-        
+
         clearTimeout(timer)
     }
 
@@ -106,12 +109,11 @@ export function DataTable() {
                     recommendedActions: ""
                 }
             })
-
             setIsOpen(true)
         }
     }
 
-    useEffect(() => { carregarDadosDaAPI() }, [pagination.pageIndex]) // Buscar os dados da API ao montar o componente ou trocar index da pg
+    useEffect(() => { loadData() }, [pagination.pageIndex]) // Buscar os dados da API ao montar o componente ou trocar index da pg
 
     const table = useReactTable({
         data,
@@ -126,76 +128,76 @@ export function DataTable() {
 
     return (
         <>
-        <SheetDetailsAnalysis isOpen={isOpen} onOpenChange={setIsOpen} data={analysisDetails}/>
-        <div className="flex flex-col gap-4 w-full">
-            {/* 2. Renderização da Tabela */}
-            <div className="rounded-md border overflow-hidden">
-                <Table className="">
-                    <TableHeader >
-                        {table.getHeaderGroups().map((headerGroup) => (
-                            <TableRow className="bg-muted" key={headerGroup.id}>
-                                {headerGroup.headers.map((header) => (
-                                    <TableHead className="text-muted-foreground" key={header.id}>
-                                        {flexRender(header.column.columnDef.header, header.getContext())}
-                                    </TableHead>
-                                ))}
-                            </TableRow>
-                        ))}
-                    </TableHeader>
-                    <TableBody>
-                        {table.getRowModel().rows?.length ? (
-                            table.getRowModel().rows.map((row) => (
-                                <TableRow className="bg-primary-foreground cursor-pointer" onClick={() => OpenAnalysisDetails(row.original.idAnalysis)} key={row.id} >
-                                    {row.getVisibleCells().map((cell) => (
-                                        <TableCell key={cell.id}>
-                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                        </TableCell>
+            <SheetDetailsAnalysis isOpen={isOpen} onOpenChange={setIsOpen} data={analysisDetails} />
+            <div className="flex flex-col gap-4 w-full">
+                {/* 2. Renderização da Tabela */}
+                <div className="rounded-md border overflow-hidden">
+                    <Table className="">
+                        <TableHeader >
+                            {table.getHeaderGroups().map((headerGroup) => (
+                                <TableRow className="bg-muted" key={headerGroup.id}>
+                                    {headerGroup.headers.map((header) => (
+                                        <TableHead className="text-muted-foreground" key={header.id}>
+                                            {flexRender(header.column.columnDef.header, header.getContext())}
+                                        </TableHead>
                                     ))}
                                 </TableRow>
-                            ))
-                        ) : (
-                            <TableRow>
-                                <TableCell colSpan={columns.length} className="h-24 text-center">
-                                    Nenhum resultado encontrado.
-                                </TableCell>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
-            </div>
+                            ))}
+                        </TableHeader>
+                        <TableBody>
+                            {table.getRowModel().rows?.length ? (
+                                table.getRowModel().rows.map((row) => (
+                                    <TableRow className="bg-primary-foreground cursor-pointer" onClick={() => OpenAnalysisDetails(row.original.idAnalysis)} key={row.id} >
+                                        {row.getVisibleCells().map((cell) => (
+                                            <TableCell key={cell.id}>
+                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                            </TableCell>
+                                        ))}
+                                    </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={columns.length} className="h-24 text-center">
+                                        Nenhum resultado encontrado.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
 
-            {/* 3. Controles Simples de Paginação */}
-            <div className="flex items-center justify-end gap-4 px-2">
-                <div className="flex-1">
-                    <Button variant="outline" onClick={carregarDadosDaAPI}><RefreshCcwIcon /> { isLoading ? "Carregando..." : "Atualizar"} </Button>
+                {/* 3. Controles Simples de Paginação */}
+                <div className="flex items-center justify-end gap-4 px-2">
+                    <div className="flex-1">
+                        <Button variant="outline" onClick={loadData}><RefreshCcwIcon /> {isLoading ? "Carregando..." : "Atualizar"} </Button>
+                    </div>
+                    <div className="text-sm font-medium">
+                        Página {table.getState().pagination.pageIndex + 1} de {table.getPageCount()}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button // Botão de voltar página
+                            variant="outline"
+                            size="icon"
+                            className="size-8"
+                            onClick={() => table.previousPage()}
+                            disabled={!table.getCanPreviousPage()}
+                        >
+                            <ChevronLeft className="size-4" />
+                        </Button>
+                        <Button // Botão de avançar página
+                            variant="outline"
+                            size="icon"
+                            className="size-8"
+                            onClick={() => table.nextPage()}
+                            disabled={!table.getCanNextPage()}
+                        >
+                            <ChevronRight className="size-4" />
+                        </Button>
+                    </div>
                 </div>
-                <div className="text-sm font-medium">
-                    Página {table.getState().pagination.pageIndex + 1} de {table.getPageCount()}
-                </div>
-                <div className="flex items-center gap-2">
-                    <Button // Botão de voltar página
-                        variant="outline"
-                        size="icon"
-                        className="size-8"
-                        onClick={() => table.previousPage()}
-                        disabled={!table.getCanPreviousPage()}
-                    >
-                        <ChevronLeft className="size-4" />
-                    </Button>
-                    <Button // Botão de avançar página
-                        variant="outline"
-                        size="icon"
-                        className="size-8"
-                        onClick={() => table.nextPage()}
-                        disabled={!table.getCanNextPage()}
-                    >
-                        <ChevronRight className="size-4" />
-                    </Button>
-                </div>
-            </div>
 
-            
-        </div>
+
+            </div>
         </>
     )
 }
