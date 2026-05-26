@@ -19,13 +19,13 @@ interface AnalysisData { // Dados individuaids de cada análise
     }
 }
 
-interface Success { // Padrão de resposta da API
+export interface Success { // Padrão de resposta da API
     success: true
     message: string
     data: AnalysisData[]
 }
 
-interface Error { // Padrão de resposta de erro da API
+export interface Error { // Padrão de resposta de erro da API
     success: false
     message: string
     data: []
