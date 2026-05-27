@@ -3,22 +3,7 @@
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger, } from "@/components/ui/sheet"
 import { Label } from "@/components/ui/label"
 import { Dispatch, SetStateAction } from "react"
-
-interface ActionPlan {
-    sumary: string
-    recommendedActions: string
-}
-
-export interface DataAnalysis {
-    id: string,
-    status: 'finalizada' | 'pendente' | 'processando'
-    createAt: string
-    class: string
-    assurance: number
-    timeExec: number
-    modelCNN: string
-    actionPlan: ActionPlan
-}
+import { DataAnalysis } from "@/services/AnalysisDetails"
 
 interface Props {
     data: DataAnalysis | undefined
@@ -56,7 +41,7 @@ export const SheetDetailsAnalysis = ( { data, isOpen = false, onOpenChange} : Pr
                             <div className="flex flex-col gap-1">
                                 <Label className="text-xs text-muted-foreground">Data da Análise</Label>
                                 <span className="text-sm text-slate-600">
-                                    {data?.createAt ? new Date(data.createAt).toLocaleDateString('pt-BR') : '---'}
+                                    {data?.createdAt ? new Date(data.createdAt).toLocaleDateString('pt-BR') : '---'}
                                 </span>
                             </div>
                         </div>
@@ -67,13 +52,13 @@ export const SheetDetailsAnalysis = ( { data, isOpen = false, onOpenChange} : Pr
                             <h4 className="text-sm font-semibold text-slate-900">Resultado do Modelo Visão Computacional</h4>
                         </div>
 
-                        <div className={`p-3 rounded-lg flex flex-col gap-1 border ${data?.class === "Detectado"
+                        <div className={`p-3 rounded-lg flex flex-col gap-1 border ${data?.classification.class === "true"
                             ? "bg-red-50 border-red-200 text-red-900"
                             : "bg-green-50 border-green-200 text-green-900"
                             }`}>
                             <Label className="text-xs opacity-80">Diagnóstico de Pinta Preta</Label>
                             <span className="text-lg font-bold flex items-center gap-1.5">
-                                {data?.class === "Detectado" ? "Pinta Preta Detectada" : "Fruta Saudável"}
+                                {data?.classification.class === "true" ? "Pinta Preta Detectada" : "Fruta Saudável"}
                             </span>
                         </div>
 
@@ -81,14 +66,14 @@ export const SheetDetailsAnalysis = ( { data, isOpen = false, onOpenChange} : Pr
                             <div className="flex flex-col gap-1">
                                 <Label className="text-xs text-muted-foreground">Confiança do Modelo</Label>
                                 <span className="text-sm font-semibold text-slate-800">
-                                    {data?.assurance ? `${(data?.assurance * 100).toFixed(2)}%` : '---'}
+                                    {data?.classification.assurance ? `${(data?.classification.assurance * 100).toFixed(2)}%` : '---'}
                                 </span>
                             </div>
 
                             <div className="flex flex-col gap-1">
                                 <Label className="text-xs text-muted-foreground">Tempo de Execução</Label>
                                 <span className="text-sm font-medium text-slate-600">
-                                    {data?.timeExec ? `${data.timeExec} ms` : '---'}
+                                    {data?.classification.timeExec ? `${data.classification.timeExec} ms` : '---'}
                                 </span>
                             </div>
                         </div>
@@ -96,7 +81,7 @@ export const SheetDetailsAnalysis = ( { data, isOpen = false, onOpenChange} : Pr
                         <div className="flex flex-col gap-1 border-t border-slate-100 pt-3">
                             <Label className="text-xs text-muted-foreground">Rede Neural Utilizada (CNN)</Label>
                             <span className="text-xs font-mono text-slate-500 bg-slate-50 p-2 rounded border border-slate-100 mt-1">
-                                {data?.modelCNN || 'Não especificado'}
+                                {data?.classification.modell_cnn || 'Não especificado'}
                             </span>
                         </div>
                     </div>

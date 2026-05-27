@@ -8,9 +8,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "
 import { Badge } from "@/components/ui/badge"
 import { SheetDetailsAnalysis } from "./SheetDetailsAnalysis"
 import { getAllAnalysis } from "@/services/getAllAnalysis"
-import { getOneAnalysis } from "@/services/getOneAnalysis"
+import { AnalysisDetails } from "@/services/AnalysisDetails"
 import { setTimeout } from "timers"
-import { DataAnalysis } from "./SheetDetailsAnalysis"
+import { DataAnalysis } from "@/services/AnalysisDetails"
 
 // Definição simples das colunas
 const columns: ColumnDef<any>[] = [
@@ -32,7 +32,7 @@ const columns: ColumnDef<any>[] = [
         cell: ({ getValue }) => {
             const classe = getValue<string>()
 
-            return classe === "true" ?  <Badge variant="destructive">Detectado</Badge> : <Badge variant="outline">Não detectado</Badge> 
+            return classe === "true" ? <Badge variant="destructive">Detectado</Badge> : <Badge variant="outline">Não detectado</Badge>
         }
     },
     {
@@ -63,21 +63,19 @@ export function DataTable() {
             if (!response.success) return
 
             let filterResponse
+            // Filtrando os dados da API para melhor exibição no front
             filterResponse = response.data.map(item => {
                 return {
-                    idAnalysis: item.id, // Para getOneAnalysis
+                    idAnalysis: item.id, // Para AnalysisDetails
                     id: item.id.slice(0, 4),
                     status: item.status,
                     imagesCount: item.imagesCount.toString(),
+                    createdAt: (item.createdAt).slice(0, 10).replace(/(\d{4})-(\d{2})-(\d{2})/, '$3/$2/$1'),
                     confianca: `${(item.classificacao.confianca * 100).toString()}%` || "indeterminado",
+                    pathImages: [],
                     classe: item.classificacao.classe,
-                    createdAt: (item.classificacao.createdAt).slice(0, 10).replace(/(\d{4})-(\d{2})-(\d{2})/, '$3/$2/$1')
                 }
             })
-
-
-            // Filtrando os dados da API para melhor exibição no front
-
             // Salvando dados pegos da API
             setData(filterResponse || [])
         } catch (error) {
@@ -93,21 +91,27 @@ export function DataTable() {
     }
 
     const OpenAnalysisDetails = async (idAnalysis: string) => {
-        const response = await getOneAnalysis(idAnalysis)
+        const response = await AnalysisDetails(idAnalysis)
+        if (!response.success) return
+
+        const res = response.data
 
         if (response.success) {
             setAnalysisDetails({
-                id: response?.data.analysis.id,
-                status: response?.data.analysis.status,
-                assurance: response?.data.classification[0].confianca,
-                timeExec: response?.data.classification[0].tempo_execucao,
-                createAt: response?.data.classification[0].createdAt,
-                class: response?.data.classification[0].classe == "true" ? "Detectado" : "Não detectado",
-                modelCNN: response?.data.classification[0].modelo_cnn,
+                id: res.id,
+                status: res.status,
+                createdAt: res.createdAt,
+                classification: {
+                    assurance: res.classification.assurance,
+                    timeExec: res.classification.timeExec,
+                    class: res.classification.class,
+                    modell_cnn: res.classification.modell_cnn,
+                },
                 actionPlan: { // Em desenvolvimento
                     sumary: "",
                     recommendedActions: ""
-                }
+                },
+                images: res.images,
             })
             setIsOpen(true)
         }

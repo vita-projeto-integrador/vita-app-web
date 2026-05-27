@@ -3,59 +3,44 @@
 import { api, } from "./api"
 import axios from "axios"
 
-interface Analysis {
-  id: string
-  id_usuario: string
+interface ActionPlan {
+    sumary: string
+    recommendedActions: string
+}
+
+interface Image {
+  path: string
+}
+
+interface Classification {
+  class: 'true' | 'false'
+  assurance: number
+  timeExec: number
+  modell_cnn: string
+}
+
+export interface DataAnalysis {
+  id: string;
   status: 'finalizada' | 'pendente' | 'processando'
   createdAt: string
-  updatedAt: string
-  deletedAt: string | null
+  images: Image[]
+  classification: Classification
+  actionPlan: ActionPlan | undefined
 }
 
-interface AnalysisImage {
-  id: string
-  id_analise: string
-  nome: string
-  caminho: string
-  coordenadas: string | null
-  tipo_mime: string
-  tamanho: number
-  createdAt: string
-  updatedAt: string
-  deletedAt: string | null
-}
-
-interface AnalysisClassification {
-  id: string;
-  id_analise: string
-  tempo_execucao: number
-  classe: 'true' | 'false'
-  confianca: number
-  modelo_cnn: string
-  createdAt: string
-  updatedAt: string
-  deletedAt: string | null
-}
-
-export interface AnalysisReportData {
-  analysis: Analysis
-  images: AnalysisImage[]
-  classification: AnalysisClassification[]
-}
-
-export interface AnalysisSuccess {
+interface AnalysisSuccess {
   success: true
   message: string
-  data: AnalysisReportData
+  data: DataAnalysis
 }
 
-export interface AnalysisError {
+interface AnalysisError {
     success: false
     message: string
     data: {}
 }
 
-export const getOneAnalysis = async (idAnalyse : string) : Promise<AnalysisSuccess | AnalysisError> => {
+export const AnalysisDetails = async (idAnalyse : string) : Promise<AnalysisSuccess | AnalysisError> => {
     if (!idAnalyse) return {  // Retorno ao ter problema com idAnalyse
         success: false,
         message: "Id da análise não encontrado",

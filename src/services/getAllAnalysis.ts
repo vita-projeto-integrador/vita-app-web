@@ -11,11 +11,8 @@ interface AnalysisData { // Dados individuaids de cada análise
     createdAt: string
     imagesCount: number
     classificacao: {
-        id: string
         classe: string
         confianca: number
-        tempo_execucao: number
-        createdAt: string
     }
 }
 
@@ -47,7 +44,7 @@ export const getAllAnalysis = async (page: number) : Promise<Success | Error>=> 
         return {
             success: true,
             message: res.message,
-            data: res?.data || []
+            data: res?.data
         }
     } catch (error: unknown) { // unknown para atender ao retorno esperado Promise<Success | Error>
         let message = "Erro inesperado na requisição"

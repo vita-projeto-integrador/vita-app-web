@@ -2,8 +2,7 @@
 
 import React, { createContext, } from "react"
 import { useState, useEffect, } from "react"
-import { getOneAnalysis, } from "@/services/getOneAnalysis"
-import { Success } from "@/services/getOneAnalysis"
+import { AnalysisDetails, } from "@/services/AnalysisDetails"
 
 export const Analysis = createContext({
 	setIdAnalysis: (id: string) => { },
@@ -19,7 +18,7 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
 	const GetAnalysis = async () => {
 		if (idAnalysis === "") return
 
-		const response = await getOneAnalysis(idAnalysis)
+		const response = await AnalysisDetails(idAnalysis)
 
 		if(response.success) {
 			setDataAnalysis(response.data)

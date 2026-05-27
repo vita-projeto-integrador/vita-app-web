@@ -6,21 +6,16 @@ import axios from "axios"
 interface UploadImageData {
     id: string
     status: string
-    id_usuario: string
-    updateAt: string
-    createdAt: string
 }
 
 interface UploadImage {
     success: true
-    status: number
     message: string
     data: UploadImageData
 } 
 
 interface UploadImageError {
     success: false
-    status: number
     message: string
     data: {}
 }
@@ -28,7 +23,6 @@ interface UploadImageError {
 export const uploapImagesForAnalyse = async (files: FormData) : Promise<UploadImage | UploadImageError> => {
     if (!files) return { // Retorno ao ter problema com idAnalyse
         success: false,
-        status: 400,
         message: "Sem imagens",
         data: {}
     }
@@ -41,7 +35,6 @@ export const uploapImagesForAnalyse = async (files: FormData) : Promise<UploadIm
 
         return {
             success: true,
-            status: 201,
             message: res?.message,
             data: res?.data || {}
         }
@@ -55,7 +48,6 @@ export const uploapImagesForAnalyse = async (files: FormData) : Promise<UploadIm
         return {
             success: false,
             message: messageApi,
-            status: 400,
             data: {}
         }
     }
