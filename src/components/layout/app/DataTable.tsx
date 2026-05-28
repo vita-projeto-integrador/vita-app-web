@@ -2,9 +2,10 @@
 
 import { useEffect, useState, } from "react"
 import { flexRender, getCoreRowModel, useReactTable, type ColumnDef, } from "@tanstack/react-table"
-import { ChevronLeft, ChevronRight, RefreshCcwIcon, } from "lucide-react"
+import { ChevronLeft, ChevronRight, RefreshCcwIcon, ChevronRightIcon, AlertCircle, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Badge } from "@/components/ui/badge"
 import { SheetDetailsAnalysis } from "./SheetDetailsAnalysis"
 import { getAllAnalysis } from "@/services/getAllAnalysis"
@@ -21,6 +22,10 @@ const columns: ColumnDef<any>[] = [
     {
         accessorKey: "status",
         header: "Status",
+        cell: ({ getValue }) => {
+            const value = getValue<string>()
+            return <p className="capitalize">{value}</p>
+        }
     },
     {
         accessorKey: "imagesCount",
@@ -30,9 +35,12 @@ const columns: ColumnDef<any>[] = [
         accessorKey: "classe",
         header: "Doença",
         cell: ({ getValue }) => {
-            const classe = getValue<string>()
+            const value = getValue<string>()
 
-            return classe === "true" ? <Badge variant="destructive">Detectado</Badge> : <Badge variant="outline">Não detectado</Badge>
+            return value === "true" ?
+                <Badge variant="destructive"> <AlertCircle />Detectado </Badge>
+                :
+                <Badge variant="outline"><CheckCircle2 className="text-green-400" /> Não detectado</Badge>
         }
     },
     {
@@ -43,6 +51,18 @@ const columns: ColumnDef<any>[] = [
         accessorKey: "createdAt",
         header: "Data",
     },
+    {
+        id: "acoes", // Boa prática. Para o TanStack Table não se perder na renderização e no controle de estado.
+        header: "", // Título vazio, apenas para ter mais uma coluna 
+        cell: () => (
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger className="cursor-pointer border border-chart-1 rounded-sm hover:bg-chart-1/40 transition-colors"> <ChevronRightIcon className="w-5 h-5" /> </TooltipTrigger>
+                    <TooltipContent side="left">Ver detalhes</TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+        )
+    }
 ]
 
 export function DataTable() {
@@ -151,7 +171,7 @@ export function DataTable() {
                         <TableBody>
                             {table.getRowModel().rows?.length ? (
                                 table.getRowModel().rows.map((row) => (
-                                    <TableRow className="bg-primary-foreground cursor-pointer" onClick={() => OpenAnalysisDetails(row.original.idAnalysis)} key={row.id} >
+                                    <TableRow className="bg-primary-foreground select-none" onClick={() => OpenAnalysisDetails(row.original.idAnalysis)} key={row.id} >
                                         {row.getVisibleCells().map((cell) => (
                                             <TableCell key={cell.id}>
                                                 {flexRender(cell.column.columnDef.cell, cell.getContext())}
