@@ -9,14 +9,14 @@ interface ActionPlan {
 }
 
 interface Image {
-  path: string
+  caminho: string
 }
 
 interface Classification {
-  class: 'true' | 'false'
-  assurance: number
-  timeExec: number
-  modell_cnn: string
+  classe: '1' | '0'
+  confianca: number
+  tempo_execucao: number
+  modelo_cnn: string
 }
 
 export interface DataAnalysis {
@@ -24,8 +24,8 @@ export interface DataAnalysis {
   status: 'finalizada' | 'pendente' | 'processando'
   createdAt: string
   images: Image[]
-  classification: Classification
-  actionPlan: ActionPlan | undefined
+  classificacao: Classification
+  actionPlan: ActionPlan | undefined // Não desenvolvido
 }
 
 interface AnalysisSuccess {

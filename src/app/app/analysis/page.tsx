@@ -13,6 +13,7 @@ export default function Page() {
         <>
         <Header />
         <div className="flex flex-col p-8 w-full h-full gap-6 overflow-y-scroll">
+            
             <DialogUploadImagesForAnalysis />
             <DataTable />
         </div>

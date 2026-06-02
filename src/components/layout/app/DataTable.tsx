@@ -37,7 +37,7 @@ const columns: ColumnDef<any>[] = [
         cell: ({ getValue }) => {
             const value = getValue<string>()
 
-            return value === "true" ?
+            return value === "1" ?
                 <Badge variant="destructive"> <AlertCircle />Detectado </Badge>
                 :
                 <Badge variant="outline"><CheckCircle2 className="text-green-400" /> Não detectado</Badge>
@@ -121,11 +121,11 @@ export function DataTable() {
                 id: res.id,
                 status: res.status,
                 createdAt: res.createdAt,
-                classification: {
-                    assurance: res.classification.assurance,
-                    timeExec: res.classification.timeExec,
-                    class: res.classification.class,
-                    modell_cnn: res.classification.modell_cnn,
+                classificacao: {
+                    confianca: res.classificacao.confianca,
+                    tempo_execucao: res.classificacao.tempo_execucao,
+                    classe: res.classificacao.classe,
+                    modelo_cnn: res.classificacao.modelo_cnn,
                 },
                 actionPlan: { // Em desenvolvimento
                     sumary: "",
@@ -192,9 +192,6 @@ export function DataTable() {
 
                 {/* 3. Controles Simples de Paginação */}
                 <div className="flex items-center justify-end gap-4 px-2">
-                    <div className="flex-1">
-                        <Button variant="outline" onClick={loadData}><RefreshCcwIcon /> {isLoading ? "Carregando..." : "Atualizar"} </Button>
-                    </div>
                     <div className="text-sm font-medium">
                         Página {table.getState().pagination.pageIndex + 1} de {table.getPageCount()}
                     </div>
