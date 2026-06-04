@@ -23,7 +23,7 @@ export interface DataAnalysis {
   id: string;
   status: 'finalizada' | 'pendente' | 'processando'
   createdAt: string
-  images: Image[]
+  imagem: Image[]
   classificacao: Classification
   actionPlan: ActionPlan | undefined // Não desenvolvido
 }

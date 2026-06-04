@@ -37,15 +37,25 @@ const columns: ColumnDef<any>[] = [
         cell: ({ getValue }) => {
             const value = getValue<string>()
 
-            return value === "1" ?
-                <Badge variant="destructive"> <AlertCircle />Detectado </Badge>
+            if (value === undefined) {
+                return <Badge variant="secondary">Analisando</Badge>
+            }
+
+            return value == "1" ?
+                <Badge variant="destructive"> <AlertCircle />Detectado</Badge>
                 :
-                <Badge variant="outline"><CheckCircle2 className="text-green-400" /> Não detectado</Badge>
+                <Badge variant="outline"><CheckCircle2 className="text-green-400" />Não detectado</Badge>
         }
     },
     {
         accessorKey: "confianca",
         header: "Confiança",
+        cell: ({ getValue }) => {
+            const value = getValue<string>()
+
+            if (value === undefined) return <Badge variant="secondary">Calculando</Badge>
+            else return <p>{value}</p>
+        }
     },
     {
         accessorKey: "createdAt",
@@ -58,7 +68,7 @@ const columns: ColumnDef<any>[] = [
             <TooltipProvider>
                 <Tooltip>
                     <TooltipTrigger className="cursor-pointer border border-chart-1 rounded-sm hover:bg-chart-1/40 transition-colors"> <ChevronRightIcon className="w-5 h-5" /> </TooltipTrigger>
-                    <TooltipContent side="left">Ver detalhes</TooltipContent>
+                    <TooltipContent className="select-none" side="left">Ver detalhes</TooltipContent>
                 </Tooltip>
             </TooltipProvider>
         )
@@ -66,7 +76,7 @@ const columns: ColumnDef<any>[] = [
 ]
 
 export function DataTable() {
-    const [data, setData] = useState<any[]>([])
+    const [data, setData] = useState<any[]>([]) // Dados para o ReactTable
     const [isLoading, setIsLoading] = useState(false)
     const [isOpen, setIsOpen] = useState(false)
     const [analysisDetails, setAnalysisDetails] = useState<DataAnalysis>()
@@ -75,64 +85,47 @@ export function DataTable() {
         pageSize: 20, // Elementos fixos por tela
     })
 
-    const loadData = async () => {
+    const loadData = async () => { // Carregar os dados para ser exibido na tabela
         setIsLoading(true)
 
         try {
             const response = await getAllAnalysis(pagination.pageIndex > 0 ? pagination.pageIndex : 1)
-            if (!response.success) return
+            if (!response.success || response.data == null) return
+
+            const data = response.data
+            if (data[0].classificacao) {
+
+            }
 
             let filterResponse
             // Filtrando os dados da API para melhor exibição no front
             filterResponse = response.data.map(item => {
                 return {
-                    idAnalysis: item.id, // Para AnalysisDetails
+                    idAnalysis: item.id, // Para AnalysisDetails puxar o id completo
                     id: item.id.slice(0, 4),
                     status: item.status,
                     imagesCount: item.imagesCount.toString(),
                     createdAt: (item.createdAt).slice(0, 10).replace(/(\d{4})-(\d{2})-(\d{2})/, '$3/$2/$1'),
-                    confianca: `${(item.classificacao.confianca * 100).toString()}%` || "indeterminado",
-                    pathImages: [],
-                    classe: item.classificacao.classe,
+                    confianca: item.classificacao != undefined ? `${(item.classificacao.confianca * 100).toFixed(1)}%` : undefined,
+                    classe: item.classificacao != undefined ? item.classificacao.classe : undefined,
                 }
             })
+
             // Salvando dados pegos da API
-            setData(filterResponse || [])
+            setData(filterResponse)
         } catch (error) {
             console.error("Erro ao buscar dados da API:", error)
-        } finally {
         }
-
-        const timer = setTimeout(() => {
-            setIsLoading(false)
-        }, 3000)
-
-        clearTimeout(timer)
     }
 
-    const OpenAnalysisDetails = async (idAnalysis: string) => {
+    const OpenAnalysisDetails = async (idAnalysis: string) => { // Exibir folha de detalhe de uma análise individual
         const response = await AnalysisDetails(idAnalysis)
         if (!response.success) return
 
         const res = response.data
 
         if (response.success) {
-            setAnalysisDetails({
-                id: res.id,
-                status: res.status,
-                createdAt: res.createdAt,
-                classificacao: {
-                    confianca: res.classificacao.confianca,
-                    tempo_execucao: res.classificacao.tempo_execucao,
-                    classe: res.classificacao.classe,
-                    modelo_cnn: res.classificacao.modelo_cnn,
-                },
-                actionPlan: { // Em desenvolvimento
-                    sumary: "",
-                    recommendedActions: ""
-                },
-                images: res.images,
-            })
+            setAnalysisDetails(res)
             setIsOpen(true)
         }
     }
@@ -140,7 +133,7 @@ export function DataTable() {
     useEffect(() => { loadData() }, [pagination.pageIndex]) // Buscar os dados da API ao montar o componente ou trocar index da pg
 
     const table = useReactTable({
-        data,
+        data, // Estado onde é puxado os dados
         columns,
         state: {
             pagination,
@@ -153,9 +146,12 @@ export function DataTable() {
     return (
         <>
             <SheetDetailsAnalysis isOpen={isOpen} onOpenChange={setIsOpen} data={analysisDetails} />
+
             <div className="flex flex-col gap-4 w-full">
+                <Button variant={"outline"} className="w-fit" onClick={() => loadData()}><RefreshCcwIcon />Atualizar</Button>
+
                 {/* 2. Renderização da Tabela */}
-                <div className="rounded-md border overflow-hidden">
+                <div className="rounded-xl border overflow-hidden">
                     <Table className="">
                         <TableHeader >
                             {table.getHeaderGroups().map((headerGroup) => (
@@ -171,7 +167,15 @@ export function DataTable() {
                         <TableBody>
                             {table.getRowModel().rows?.length ? (
                                 table.getRowModel().rows.map((row) => (
-                                    <TableRow className="bg-primary-foreground select-none" onClick={() => OpenAnalysisDetails(row.original.idAnalysis)} key={row.id} >
+                                    <TableRow
+                                        key={row.id}
+                                        className="bg-primary-foreground select-none"
+                                        onClick={() => { // Abre o modal somente se tiver concluído a análise
+                                            if (row.original.confianca !== undefined) OpenAnalysisDetails(row.original.idAnalysis)
+                                            else alert("Análise em andamento...")
+                                        }
+                                        }
+                                    >
                                         {row.getVisibleCells().map((cell) => (
                                             <TableCell key={cell.id}>
                                                 {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -216,8 +220,6 @@ export function DataTable() {
                         </Button>
                     </div>
                 </div>
-
-
             </div>
         </>
     )

@@ -5,15 +5,17 @@ import { api } from "./api"
 
 type StatusAnalysis = "finalizada" | "pendente" | "cancelada" // Status da análise
 
+interface Classificacao {
+    classe: string
+    confianca: number
+}
+
 interface AnalysisData { // Dados individuaids de cada análise
     id: string
     status: StatusAnalysis
     createdAt: string
     imagesCount: number
-    classificacao: {
-        classe: string
-        confianca: number
-    }
+    classificacao: Classificacao | undefined // undefined pois o processo de classificação é assincrono e inicia sem dados
 }
 
 export interface Success { // Padrão de resposta da API
@@ -28,12 +30,12 @@ export interface Error { // Padrão de resposta de erro da API
     data: []
 }
 
-export const getAllAnalysis = async (page: number) : Promise<Success | Error>=> {
+export const getAllAnalysis = async (page: number): Promise<Success | Error> => {
     if (page < 1 || !page) return { // Retorno em caso de problema com número de pagina
-            success: false,
-            message: "Página inválida",
-            data: []
-        } 
+        success: false,
+        message: "Página inválida",
+        data: []
+    }
 
     try {
         const response = await api.get<Success>("analysis", {
@@ -50,8 +52,8 @@ export const getAllAnalysis = async (page: number) : Promise<Success | Error>=> 
         let message = "Erro inesperado na requisição"
 
         if (axios.isAxiosError(error)) { // Verifica se error é veio do axios
-        // Verifica se axios mandou error | Salva a mensagem personalizada que a API || Salva mensagem padrão do axios 
-            message = error.response?.data.message || error.message 
+            // Verifica se axios mandou error | Salva a mensagem personalizada que a API || Salva mensagem padrão do axios 
+            message = error.response?.data.message || error.message
         }
 
         return {

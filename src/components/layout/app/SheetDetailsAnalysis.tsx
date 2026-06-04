@@ -1,18 +1,28 @@
 'use client'
 
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger, } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, } from "@/components/ui/sheet"
 import { Label } from "@/components/ui/label"
-import { Dispatch, SetStateAction } from "react"
+import { Dispatch, SetStateAction, } from "react"
+import Image from "next/image"
 import { DataAnalysis } from "@/services/AnalysisDetails"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useState } from "react"
+import { ImageLightBox } from "./ImageLightBox"
 
 interface Props {
-    data: DataAnalysis | undefined
+    data: DataAnalysis | undefined // Deixar undefined para não precisar definir um estado inicial dentro de useState (muito código desnecessário)
     isOpen: boolean
     onOpenChange: Dispatch<SetStateAction<boolean>>
 }
 
 export const SheetDetailsAnalysis = ({ data, isOpen = false, onOpenChange }: Props) => {
+    const [isOpenLightBox, setIsOpenLightBox] = useState(false)
+    const [pathLightBox, setPathLightBox] = useState("")
+
+    const openLightBox = (path: string) => {
+        setIsOpenLightBox(true)
+        setPathLightBox(path)
+    }
 
     return (
         <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -31,6 +41,7 @@ export const SheetDetailsAnalysis = ({ data, isOpen = false, onOpenChange }: Pro
                     {/* Detalhes da análise */}
                     <TabsContent value="details" className="flex-1 min-h-0 overflow-y-auto bg-slate-50">
                         <div className="flex flex-col p-4 gap-4 w-full ">
+                            {/* Card 1 - id */}
                             <div className="flex flex-col gap-4 p-4 bg-white rounded-xl border border-slate-100">
                                 <div className="flex items-center border-b border-slate-100 pb-3">
                                     <div className="flex flex-col gap-1">
@@ -56,18 +67,19 @@ export const SheetDetailsAnalysis = ({ data, isOpen = false, onOpenChange }: Pro
                                 </div>
                             </div>
 
+                            {/* Card 2 - resultados da classificação */}
                             <div className="flex flex-col gap-4 p-4 bg-white rounded-xl border border-slate-100">
                                 <div className="border-b border-slate-100 pb-2">
                                     <h4 className="text-sm font-semibold text-slate-900">Resultado do Modelo Visão Computacional</h4>
                                 </div>
 
-                                <div className={`p-3 rounded-lg flex flex-col gap-1 border ${data?.classificacao.classe === "1"
+                                <div className={`p-3 rounded-lg flex flex-col gap-1 border ${data?.classificacao.classe == "1"
                                     ? "bg-red-50 border-red-200 text-red-900"
                                     : "bg-green-50 border-green-200 text-green-900"
                                     }`}>
                                     <Label className="text-xs opacity-80">Diagnóstico de Pinta Preta</Label>
                                     <span className="text-lg font-bold flex items-center gap-1.5">
-                                        {data?.classificacao.classe === "1" ? "Pinta Preta Detectada" : "Fruta Saudável"}
+                                        {data?.classificacao.classe == "1" ? "Pinta Preta Detectada" : "Fruta Saudável"}
                                     </span>
                                 </div>
 
@@ -95,6 +107,43 @@ export const SheetDetailsAnalysis = ({ data, isOpen = false, onOpenChange }: Pro
                                 </div>
                             </div>
 
+                            {/* Card 3 - imagens*/}
+                            <div className="flex flex-col gap-4 p-4 bg-white rounded-xl border border-slate-100">
+                                <div className="flex items-center border-b border-slate-100 pb-3">
+                                    <div className="flex flex-col gap-1">
+                                        <Label className="text-xs text-muted-foreground">Imagens</Label>
+                                        <p className="text-sm font-mono font-medium text-slate-700"></p>
+                                    </div>
+                                </div>
+
+                                {/* Elemento que exibe a imagem clicada em tamanho maior */}
+                                <ImageLightBox isOpen={isOpenLightBox} onOpenChange={setIsOpenLightBox} path={pathLightBox} />
+
+                                {
+                                    data?.imagem ? ( // Exibe conteúdo em caso de existencia ou não de imagem
+                                        <div className="grid grid-cols-4 gap-3">
+                                            {
+                                                data.imagem.map((item, i) => (
+                                                    <div 
+                                                        key={i} 
+                                                        onClick={() => openLightBox(`http://localhost:8080/${item.caminho}`)} 
+                                                        className="relative w-full aspect-square rounded-xl border border-slate-100 overflow-hidden hover:outline-2 transition-all"
+                                                    >
+                                                        <Image
+                                                            src={`http://localhost:8080/${item.caminho}`}
+                                                            fill
+                                                            alt="Imagem"
+                                                            quality={25}
+                                                        />
+                                                    </div>
+                                                ))
+                                            }
+                                        </div>
+                                    ) : (
+                                        <div>Nenhuma imagem encontrada</div>
+                                    )
+                                }
+                            </div>
                         </div>
                     </TabsContent>
 
@@ -103,7 +152,7 @@ export const SheetDetailsAnalysis = ({ data, isOpen = false, onOpenChange }: Pro
                         <div className="flex flex-col p-4 gap-4">
                             {
                                 // Doença não detectada
-                                data?.classificacao.classe === "1" ? (
+                                data?.classificacao.classe == "0" && (
                                     <div className="flex flex-col gap-4 flex-1 items-center pb-3">
                                         {/* Card */}
                                         <div className="flex flex-col gap-4 p-4 w-full bg-green-600/5 rounded-xl border border-slate-100">
@@ -127,7 +176,10 @@ export const SheetDetailsAnalysis = ({ data, isOpen = false, onOpenChange }: Pro
                                             </div>
                                         </div>
                                     </div>
-                                ) : (
+                                )
+                            }
+                            {
+                                data?.classificacao.classe == "1" && (
                                     // Doença detectada
                                     <div className="flex flex-col gap-4 flex-1 items-center pb-3">
                                         {/* Card */}
