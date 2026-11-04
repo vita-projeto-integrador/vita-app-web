@@ -4,8 +4,8 @@ import { api, } from "./api"
 import axios from "axios"
 
 interface ActionPlan {
-    sumary: string
-    recommendedActions: string
+  sumary: string
+  recommendedActions: string
 }
 
 interface Image {
@@ -26,6 +26,7 @@ export interface DataAnalysis {
   imagem: Image[]
   classificacao: Classification
   actionPlan: ActionPlan | undefined // Não desenvolvido
+  localizacao: { latitude: number; longitude: number; precisao: number } | null // null sem GPS
 }
 
 interface AnalysisSuccess {
@@ -35,38 +36,38 @@ interface AnalysisSuccess {
 }
 
 interface AnalysisError {
-    success: false
-    message: string
-    data: {}
+  success: false
+  message: string
+  data: {}
 }
 
-export const AnalysisDetails = async (idAnalyse : string) : Promise<AnalysisSuccess | AnalysisError> => {
-    if (!idAnalyse) return {  // Retorno ao ter problema com idAnalyse
-        success: false,
-        message: "Id da análise não encontrado",
-        data: {}
+export const AnalysisDetails = async (idAnalyse: string): Promise<AnalysisSuccess | AnalysisError> => {
+  if (!idAnalyse) return {  // Retorno ao ter problema com idAnalyse
+    success: false,
+    message: "Id da análise não encontrado",
+    data: {}
+  }
+
+  try {
+    const response = await api.get<AnalysisSuccess>(`/analysis/${idAnalyse}`) // Get na API
+    const res = response.data // Encurtador
+
+    return {
+      success: true,
+      message: res.message,
+      data: res.data
+    }
+  } catch (error: unknown) {
+    let message = "Erro ao se comunicar com a API"
+    if (axios.isAxiosError(error)) { // unknown para atender ao retorno esperado Promise<Analysis | AnalysisError>
+      // Verifica se axios mandou error | Salva a mensagem personalizada que a API || Salva mensagem padrão do axios 
+      message = error.response?.data.message || error.message
     }
 
-    try {
-      const response = await api.get<AnalysisSuccess>(`/analysis/${idAnalyse}`) // Get na API
-      const res = response.data // Encurtador
-
-      return {
-        success: true,
-        message: res.message,
-        data: res.data
-      }
-    } catch (error: unknown) {
-      let message = "Erro ao se comunicar com a API"
-      if(axios.isAxiosError(error)){ // unknown para atender ao retorno esperado Promise<Analysis | AnalysisError>
-        // Verifica se axios mandou error | Salva a mensagem personalizada que a API || Salva mensagem padrão do axios 
-        message = error.response?.data.message || error.message
-      }
-
-      return {
-        success: false,
-        message: message,
-        data: {}
-      }
+    return {
+      success: false,
+      message: message,
+      data: {}
     }
+  }
 }
