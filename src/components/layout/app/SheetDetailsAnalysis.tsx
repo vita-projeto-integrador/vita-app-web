@@ -146,8 +146,7 @@ export const SheetDetailsAnalysis = ({ data, isOpen = false, onOpenChange }: Pro
                                                             src={item.url}
                                                             fill
                                                             alt={item.nome}
-                                                            sizes="96px"
-                                                            quality={25}
+                                                            unoptimized // host local: o otimizador do Next 16 recusa IP privado
                                                         />
                                                     </div>
                                                 ))
