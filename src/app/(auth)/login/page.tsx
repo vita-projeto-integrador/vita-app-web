@@ -5,8 +5,7 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { ControllerRenderProps } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod";
-import { loginUser } from "@/services/user";
-import { saveSession } from "@/actions/session";
+import { login } from "@/services/auth";
 import { loginSchema, LoginData } from "@/schemas/login";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, } from "@/components/ui/card"
@@ -26,22 +25,16 @@ export default function Login() {
         }
     })
 
-    const { handleSubmit, formState: { isSubmitting } } = form
+    const { handleSubmit, setError, formState: { isSubmitting, errors } } = form
 
     const onSubmit = async (data: LoginData) => {
-        const response = await loginUser(data)
+        const response = await login(data) // a sessão é gravada no servidor
 
         if (response.success) {
-            await saveSession({ // Salvar no cookie
-                token: response.data.token, 
-                name: response.data.user.name, 
-                email: response.data.user.email, 
-                userId: response.data.user.id
-            })
-
-            router.push('/app')
+            router.replace('/app') // replace: "voltar" não retorna para o login
         } else {
-            alert(response.message)
+            // 401 da API = e-mail ou senha inválidos (mensagem vem pronta)
+            setError("root", { message: response.message })
         }
     }
 
@@ -88,6 +81,8 @@ export default function Login() {
                                     </FormItem>
                                 )}
                             />
+
+                            {errors.root && <p className="text-sm text-destructive text-center">{errors.root.message}</p>}
 
                             <div className="flex flex-col gap-4">
                                 <Button

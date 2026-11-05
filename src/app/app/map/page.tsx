@@ -8,9 +8,10 @@ import { MapLegend } from "@/components/layout/app/MapLegend"
 import { MapSearch } from "@/components/layout/app/MapSearch"
 import { PeriodSelect } from "@/components/layout/app/PeriodSelect"
 import { SheetDetailsAnalysis } from "@/components/layout/app/SheetDetailsAnalysis"
-import { AnalysisDetails, type DataAnalysis } from "@/services/AnalysisDetails"
-import { getMapAnalyses, type AnalysisMapItem, type MapClasse } from "@/services/getMapAnalysis"
+import { getAnalysis, getMapAnalyses } from "@/services/analysis"
+import type { AnalysisDetails, AnalysisMapItem, ClassificationClass } from "@/types/api"
 import { getPeriodRange, type Period } from "@/lib/map"
+
 
 // O Leaflet usa 'window', que não existe no servidor: o mapa só carrega no navegador
 const AnalysesMap = dynamic(
@@ -22,7 +23,7 @@ export default function Page() {
     // Filtros (valores iniciais: últimos 30 dias, todos os status e resultados)
     const [period, setPeriod] = useState<Period>("30d")
     const [status, setStatus] = useState("")
-    const [classe, setClasse] = useState<MapClasse | "">("")
+    const [classe, setClasse] = useState<ClassificationClass | "">("")
     const [search, setSearch] = useState("") // ainda sem efeito: as APIs não têm busca
 
     const [analyses, setAnalyses] = useState<AnalysisMapItem[]>([])
@@ -30,7 +31,7 @@ export default function Page() {
     const [message, setMessage] = useState("")
 
     // Folha de detalhes (a mesma da página de análises)
-    const [details, setDetails] = useState<DataAnalysis>()
+    const [details, setDetails] = useState<AnalysisDetails>()
     const [isOpen, setIsOpen] = useState(false)
 
     // Busca os pontos sempre que um filtro muda
@@ -59,7 +60,7 @@ export default function Page() {
             setMessage(item.status === "falhou" ? "Esta análise falhou." : "Esta análise ainda está em andamento.")
             return
         }
-        const response = await AnalysisDetails(item.id)
+                const response = await getAnalysis(item.id)
         if (!response.success) {
             setMessage(response.message)
             return
@@ -69,7 +70,7 @@ export default function Page() {
     }
 
     // Só análises finalizadas têm resultado: escolher um resultado fixa o status
-    const changeClasse = (value: MapClasse | "") => {
+    const changeClasse = (value: ClassificationClass | "") => {
         setClasse(value)
         if (value) setStatus("finalizada")
     }

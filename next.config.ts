@@ -1,26 +1,30 @@
 import type { NextConfig } from "next";
 
+// Endereço público das imagens (URLs assinadas da API)
+const filesUrl = new URL(process.env.FILES_URL ?? "http://localhost:8080/api/files");
+
 const nextConfig: NextConfig = {
   reactCompiler: true,
   experimental: {
     serverActions: {
-      bodySizeLimit: '10mb',
+      // upload: até 4 imagens de 5 MB + margem do multipart
+      bodySizeLimit: "21mb",
     },
   },
-  images: { 
+  images: {
     // Permite que o Next.js gere imagens com qualidade 25 ou 75
     qualities: [25, 75, 100],
 
-    remotePatterns: [ // Para permitir pegar imagens de outras rotas alem da api
+    remotePatterns: [
       {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '8080', 
-        pathname: '/storage/**',
+        protocol: filesUrl.protocol.replace(":", "") as "http" | "https",
+        hostname: filesUrl.hostname,
+        port: filesUrl.port,
+        pathname: `${filesUrl.pathname}/**`, // search omitido: aceita ?expires&signature
       },
     ],
     // Desativa a otimização em modo de desenvolvimento se necessário
-    unoptimized: process.env.NODE_ENV === 'development',
+    unoptimized: process.env.NODE_ENV === "development",
   },
 };
 export default nextConfig;

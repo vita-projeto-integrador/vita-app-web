@@ -12,14 +12,14 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import type { MapClasse } from "@/services/getMapAnalysis"
+import type { ClassificationClass } from "@/types/api"
 import { CLASSE_OPTIONS, STATUS_OPTIONS } from "@/lib/map"
 
 interface Props {
     status: string
-    classe: MapClasse | ""
+    classe: ClassificationClass | ""
     onChangeStatus: (value: string) => void
-    onChangeClasse: (value: MapClasse | "") => void
+    onChangeClasse: (value: ClassificationClass | "") => void
     onClear: () => void
 }
 
@@ -57,7 +57,7 @@ export const MapFilters = ({ status, classe, onChangeStatus, onChangeClasse, onC
 
                 <DropdownMenuLabel>Resultado</DropdownMenuLabel>
                 {/* O valor devolvido é string; as opções vêm de CLASSE_OPTIONS, então o cast é seguro */}
-                <DropdownMenuRadioGroup value={classe} onValueChange={(value) => onChangeClasse(value as MapClasse | "")}>
+                <DropdownMenuRadioGroup value={classe} onValueChange={(value) => onChangeClasse(value as ClassificationClass | "")}>
                     {CLASSE_OPTIONS.map(option => (
                         <DropdownMenuRadioItem key={option.label} value={option.value} onSelect={keepOpen}>
                             {option.label}

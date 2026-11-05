@@ -3,8 +3,9 @@
 import "leaflet/dist/leaflet.css"
 import { useEffect } from "react"
 import { CircleMarker, MapContainer, TileLayer, Tooltip, useMap } from "react-leaflet"
-import type { AnalysisMapItem } from "@/services/getMapAnalysis"
+import type { AnalysisMapItem } from "@/types/api"
 import { getMapLabel, getPinColor } from "@/lib/map"
+import { formatDate } from "@/lib/analysis"
 
 // Único arquivo do web que conhece a biblioteca de mapa (Leaflet)
 
@@ -52,7 +53,7 @@ export const AnalysesMap = ({ analyses, onSelect }: Props) => {
                 >
                     {/* Texto que aparece ao passar o mouse */}
                     <Tooltip>
-                        {getMapLabel(item)} · {new Date(item.createdAt).toLocaleDateString("pt-BR")}
+                        {getMapLabel(item)} · {formatDate(item.criado_em)}
                     </Tooltip>
                 </CircleMarker>
             ))}
