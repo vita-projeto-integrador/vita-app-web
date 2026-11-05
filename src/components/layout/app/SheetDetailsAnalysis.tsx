@@ -64,6 +64,13 @@ export const SheetDetailsAnalysis = ({ data, isOpen = false, onOpenChange }: Pro
                                             {data?.createdAt ? new Date(data.createdAt).toLocaleDateString('pt-BR') : '---'}
                                         </span>
                                     </div>
+
+                                    <div className="flex flex-col gap-1">
+                                        <Label className="text-xs text-muted-foreground">Precisão do GPS</Label>
+                                        <span className="text-sm text-slate-600">
+                                            {data?.localizacao ? `± ${Math.round(data.localizacao.precisao)} m` : 'Sem localização'}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
 
@@ -124,9 +131,9 @@ export const SheetDetailsAnalysis = ({ data, isOpen = false, onOpenChange }: Pro
                                         <div className="grid grid-cols-4 gap-3">
                                             {
                                                 data.imagem.map((item, i) => (
-                                                    <div 
-                                                        key={i} 
-                                                        onClick={() => openLightBox(`http://localhost:8080/${item.caminho}`)} 
+                                                    <div
+                                                        key={i}
+                                                        onClick={() => openLightBox(`http://localhost:8080/${item.caminho}`)}
                                                         className="relative w-full aspect-square rounded-xl border border-slate-100 overflow-hidden hover:outline-2 transition-all"
                                                     >
                                                         <Image
