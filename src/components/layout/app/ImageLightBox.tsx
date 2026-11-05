@@ -21,7 +21,7 @@ export const ImageLightBox = ({ path, isOpen = false, onOpenChange }: Props) => 
                             src={path}
                             fill
                             alt="Imagem tela cheia"
-                            quality={100}
+                            unoptimized // URL assinada da API: vai direto do navegador para /api/files
                             className="rounded-lg"
                         />
                     </div>

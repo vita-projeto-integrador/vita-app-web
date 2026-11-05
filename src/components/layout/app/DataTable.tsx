@@ -1,69 +1,64 @@
 "use client"
 
-import { useEffect, useState, } from "react"
-import { flexRender, getCoreRowModel, useReactTable, type ColumnDef, } from "@tanstack/react-table"
+import { useEffect, useRef, useState } from "react"
+import { flexRender, getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table"
 import { ChevronLeft, ChevronRight, RefreshCcwIcon, ChevronRightIcon, AlertCircle, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Badge } from "@/components/ui/badge"
 import { SheetDetailsAnalysis } from "./SheetDetailsAnalysis"
-import { getAllAnalysis } from "@/services/getAllAnalysis"
-import { AnalysisDetails } from "@/services/AnalysisDetails"
-import { setTimeout } from "timers"
-import { DataAnalysis } from "@/services/AnalysisDetails"
+import { getAnalysis, listAnalyses } from "@/services/analysis"
+import { STATUS_LABEL, formatConfidence, formatDate, isInProgress } from "@/lib/analysis"
+import type { AnalysisDetails, AnalysisListItem } from "@/types/api"
 
-// Definição simples das colunas
-const columns: ColumnDef<any>[] = [
+const PAGE_SIZE = 20 // mesmo padrão da API
+
+// As células leem o item da API direto (row.original): sem objeto intermediário
+const columns: ColumnDef<AnalysisListItem>[] = [
     {
-        accessorKey: "id",
+        id: "id",
         header: "Id",
+        cell: ({ row }) => <span className="font-mono">{row.original.id.slice(0, 8)}</span>,
     },
     {
-        accessorKey: "status",
+        id: "status",
         header: "Status",
-        cell: ({ getValue }) => {
-            const value = getValue<string>()
-            return <p className="capitalize">{value}</p>
-        }
+        cell: ({ row }) => STATUS_LABEL[row.original.status],
     },
     {
-        accessorKey: "imagesCount",
+        accessorKey: "total_imagens",
         header: "Imagens",
     },
     {
-        accessorKey: "classe",
+        id: "classe",
         header: "Doença",
-        cell: ({ getValue }) => {
-            const value = getValue<string>()
+        cell: ({ row }) => {
+            const { status, classificacao } = row.original
+            if (status === "falhou") return <Badge variant="secondary">Sem resultado</Badge>
+            if (!classificacao) return <Badge variant="secondary">Analisando</Badge>
 
-            if (value === undefined) {
-                return <Badge variant="secondary">Analisando</Badge>
-            }
-
-            return value == "1" ?
-                <Badge variant="destructive"> <AlertCircle />Detectado</Badge>
-                :
-                <Badge variant="outline"><CheckCircle2 className="text-green-400" />Não detectado</Badge>
-        }
+            return classificacao.classe === "infectado"
+                ? <Badge variant="destructive"><AlertCircle />Detectado</Badge>
+                : <Badge variant="outline"><CheckCircle2 className="text-green-400" />Não detectado</Badge>
+        },
     },
     {
-        accessorKey: "confianca",
+        id: "confianca",
         header: "Confiança",
-        cell: ({ getValue }) => {
-            const value = getValue<string>()
-
-            if (value === undefined) return <Badge variant="secondary">Calculando</Badge>
-            else return <p>{value}</p>
-        }
+        cell: ({ row }) => {
+            const { classificacao } = row.original
+            return classificacao ? formatConfidence(classificacao.confianca) : "—"
+        },
     },
     {
-        accessorKey: "createdAt",
+        id: "criado_em",
         header: "Data",
+        cell: ({ row }) => formatDate(row.original.criado_em),
     },
     {
         id: "acoes", // Boa prática. Para o TanStack Table não se perder na renderização e no controle de estado.
-        header: "", // Título vazio, apenas para ter mais uma coluna 
+        header: "", // Título vazio, apenas para ter mais uma coluna
         cell: () => (
             <TooltipProvider>
                 <Tooltip>
@@ -71,76 +66,60 @@ const columns: ColumnDef<any>[] = [
                     <TooltipContent className="select-none" side="left">Ver detalhes</TooltipContent>
                 </Tooltip>
             </TooltipProvider>
-        )
-    }
+        ),
+    },
 ]
 
+// Para recarregar do zero (ex.: após upload), o pai troca a "key" do componente
 export function DataTable() {
-    const [data, setData] = useState<any[]>([]) // Dados para o ReactTable
+    const [data, setData] = useState<AnalysisListItem[]>([])
+    const [pageCount, setPageCount] = useState(0)
     const [isLoading, setIsLoading] = useState(false)
+    const [message, setMessage] = useState("")
     const [isOpen, setIsOpen] = useState(false)
-    const [analysisDetails, setAnalysisDetails] = useState<DataAnalysis>()
-    const [pagination, setPagination] = useState({ // Controla índice da página
-        pageIndex: 0,
-        pageSize: 20, // Elementos fixos por tela
-    })
+    const [analysisDetails, setAnalysisDetails] = useState<AnalysisDetails>()
+    const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: PAGE_SIZE })
 
-    const loadData = async () => { // Carregar os dados para ser exibido na tabela
+    const lastRequest = useRef(0) // descarta respostas antigas ao trocar de página rápido
+
+    const loadData = async (pageIndex: number) => {
+        const requestId = ++lastRequest.current
         setIsLoading(true)
+        // pageIndex do TanStack começa em 0; page da API começa em 1
+        const response = await listAnalyses(pageIndex + 1, PAGE_SIZE)
+        if (requestId !== lastRequest.current) return
+        setIsLoading(false)
 
-        try {
-            const response = await getAllAnalysis(pagination.pageIndex > 0 ? pagination.pageIndex : 1)
-            if (!response.success || response.data == null) return
-
-            const data = response.data
-            if (data[0].classificacao) {
-
-            }
-
-            let filterResponse
-            // Filtrando os dados da API para melhor exibição no front
-            filterResponse = response.data.map(item => {
-                return {
-                    idAnalysis: item.id, // Para AnalysisDetails puxar o id completo
-                    id: item.id.slice(0, 4),
-                    status: item.status,
-                    imagesCount: item.imagesCount.toString(),
-                    createdAt: (item.createdAt).slice(0, 10).replace(/(\d{4})-(\d{2})-(\d{2})/, '$3/$2/$1'),
-                    confianca: item.classificacao != undefined ? `${(item.classificacao.confianca * 100).toFixed(1)}%` : undefined,
-                    classe: item.classificacao != undefined ? item.classificacao.classe : undefined,
-                }
-            })
-
-            // Salvando dados pegos da API
-            setData(filterResponse)
-        } catch (error) {
-            console.error("Erro ao buscar dados da API:", error)
+        if (!response.success) {
+            setMessage(response.message)
+            return
         }
+        setMessage("")
+        setData(response.data.items)
+        setPageCount(response.data.total_pages)
     }
 
-    const OpenAnalysisDetails = async (idAnalysis: string) => { // Exibir folha de detalhe de uma análise individual
-        const response = await AnalysisDetails(idAnalysis)
-        if (!response.success) return
+    useEffect(() => { loadData(pagination.pageIndex) }, [pagination.pageIndex])
 
-        const res = response.data
+    const openDetails = async (item: AnalysisListItem) => {
+        if (isInProgress(item.status)) return setMessage("Análise em andamento: atualize em alguns segundos.")
+        if (item.status === "falhou") return setMessage("Esta análise falhou e não tem resultado.")
 
-        if (response.success) {
-            setAnalysisDetails(res)
-            setIsOpen(true)
-        }
+        const response = await getAnalysis(item.id)
+        if (!response.success) return setMessage(response.message)
+
+        setAnalysisDetails(response.data)
+        setIsOpen(true)
     }
-
-    useEffect(() => { loadData() }, [pagination.pageIndex]) // Buscar os dados da API ao montar o componente ou trocar index da pg
 
     const table = useReactTable({
-        data, // Estado onde é puxado os dados
+        data,
         columns,
-        state: {
-            pagination,
-        },
+        state: { pagination },
         onPaginationChange: setPagination,
         getCoreRowModel: getCoreRowModel(),
-        manualPagination: true
+        manualPagination: true,
+        pageCount, // total_pages da API: sem isso a tabela calcula pelas linhas carregadas
     })
 
     return (
@@ -148,12 +127,16 @@ export function DataTable() {
             <SheetDetailsAnalysis isOpen={isOpen} onOpenChange={setIsOpen} data={analysisDetails} />
 
             <div className="flex flex-col gap-4 w-full">
-                <Button variant={"outline"} className="w-fit" onClick={() => loadData()}><RefreshCcwIcon />Atualizar</Button>
+                <div className="flex items-center gap-4">
+                    <Button variant={"outline"} className="w-fit" disabled={isLoading} onClick={() => loadData(pagination.pageIndex)}>
+                        <RefreshCcwIcon className={isLoading ? "animate-spin" : ""} />Atualizar
+                    </Button>
+                    {message && <span className="text-sm text-muted-foreground">{message}</span>}
+                </div>
 
-                {/* 2. Renderização da Tabela */}
                 <div className="rounded-xl border overflow-hidden">
-                    <Table className="">
-                        <TableHeader >
+                    <Table>
+                        <TableHeader>
                             {table.getHeaderGroups().map((headerGroup) => (
                                 <TableRow className="bg-muted" key={headerGroup.id}>
                                     {headerGroup.headers.map((header) => (
@@ -165,16 +148,12 @@ export function DataTable() {
                             ))}
                         </TableHeader>
                         <TableBody>
-                            {table.getRowModel().rows?.length ? (
+                            {table.getRowModel().rows.length ? (
                                 table.getRowModel().rows.map((row) => (
                                     <TableRow
                                         key={row.id}
-                                        className="bg-primary-foreground select-none"
-                                        onClick={() => { // Abre o modal somente se tiver concluído a análise
-                                            if (row.original.confianca !== undefined) OpenAnalysisDetails(row.original.idAnalysis)
-                                            else alert("Análise em andamento...")
-                                        }
-                                        }
+                                        className="bg-primary-foreground select-none cursor-pointer"
+                                        onClick={() => openDetails(row.original)}
                                     >
                                         {row.getVisibleCells().map((cell) => (
                                             <TableCell key={cell.id}>
@@ -186,7 +165,7 @@ export function DataTable() {
                             ) : (
                                 <TableRow>
                                     <TableCell colSpan={columns.length} className="h-24 text-center">
-                                        Nenhum resultado encontrado.
+                                        {isLoading ? "Carregando..." : "Nenhuma análise encontrada."}
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -194,28 +173,15 @@ export function DataTable() {
                     </Table>
                 </div>
 
-                {/* 3. Controles Simples de Paginação */}
                 <div className="flex items-center justify-end gap-4 px-2">
                     <div className="text-sm font-medium">
-                        Página {table.getState().pagination.pageIndex + 1} de {table.getPageCount()}
+                        Página {pageCount === 0 ? 0 : pagination.pageIndex + 1} de {pageCount}
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button // Botão de voltar página
-                            variant="outline"
-                            size="icon"
-                            className="size-8"
-                            onClick={() => table.previousPage()}
-                            disabled={!table.getCanPreviousPage()}
-                        >
+                        <Button variant="outline" size="icon" className="size-8" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage() || isLoading}>
                             <ChevronLeft className="size-4" />
                         </Button>
-                        <Button // Botão de avançar página
-                            variant="outline"
-                            size="icon"
-                            className="size-8"
-                            onClick={() => table.nextPage()}
-                            disabled={!table.getCanNextPage()}
-                        >
+                        <Button variant="outline" size="icon" className="size-8" onClick={() => table.nextPage()} disabled={!table.getCanNextPage() || isLoading}>
                             <ChevronRight className="size-4" />
                         </Button>
                     </div>

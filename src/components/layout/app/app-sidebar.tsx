@@ -8,18 +8,19 @@ import { Sidebar, SidebarContent, SidebarGroup, SidebarHeader, SidebarMenu, Side
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuSeparator } from "../../ui/dropdown-menu"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { usePathname } from "next/navigation"
-import { deleteSession } from "@/actions/session"
+import { logout } from "@/actions/session"
+import { USER_COOKIE, type SessionUser } from "@/lib/session"
 import Cookie from "js-cookie"
 
-interface UserData{
+interface UserData {
   name: string
   email: string
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const userCookie = Cookie.get('userPonskan') // Pegar o Cookie
-  const userData : UserData = userCookie ? JSON.parse(userCookie) : {} // Verifica se não é null
-  const placeholderAvatar = userData.name !==undefined ? userData.name.slice(0, 2) : "US"
+  const userCookie = Cookie.get(USER_COOKIE) // cookie público gravado no login
+  const userData: Partial<SessionUser> = userCookie ? JSON.parse(userCookie) : {}
+  const placeholderAvatar = userData.nome ? userData.nome.slice(0, 2).toUpperCase() : "US"
 
   const path = usePathname()
 
@@ -55,7 +56,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     <SidebarMenuButton size="default" asChild isActive={isActive}>
                       <Link href={item.url}>
                         <div hidden={!isActive} className="w-1 h-full rounded-2xl bg-primary"></div>
-                        <item.icon/> 
+                        <item.icon />
                         {item.title}
                       </Link>
                     </SidebarMenuButton>
@@ -88,7 +89,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     <SidebarMenuButton size="default" asChild isActive={isActive}>
                       <Link href={item.url}>
                         <div hidden={!isActive} className="w-1 h-full rounded-2xl bg-primary"></div>
-                        <item.icon/> 
+                        <item.icon />
                         {item.title}
                       </Link>
                     </SidebarMenuButton>
@@ -113,7 +114,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     </Avatar>
 
                     <div className="flex flex-col">
-                      <p className="font-semibold" suppressHydrationWarning>{userData.name}</p>
+                      <p className="font-semibold" suppressHydrationWarning>{userData.nome}</p>
                       <p className="font-light" suppressHydrationWarning>{userData.email}</p>
                     </div>
                   </SidebarMenuButton>
@@ -131,8 +132,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
                     <DropdownMenuSeparator />
 
-                    <DropdownMenuItem asChild>
-                      <Link href="/" onClick={deleteSession}><LogOut /> Sair da conta</Link>
+                    {/* a ação apaga os cookies e redireciona: sem corrida com a navegação do Link */}
+                    <DropdownMenuItem onSelect={() => logout()}>
+                      <LogOut /> Sair da conta
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
                 </DropdownMenuContent>

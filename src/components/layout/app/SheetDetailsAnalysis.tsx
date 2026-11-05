@@ -4,18 +4,21 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, } from 
 import { Label } from "@/components/ui/label"
 import { Dispatch, SetStateAction, } from "react"
 import Image from "next/image"
-import { DataAnalysis } from "@/services/AnalysisDetails"
+import type { AnalysisDetails } from "@/types/api"
+import { CLASSE_LABEL, STATUS_LABEL, formatConfidence, formatDate } from "@/lib/analysis"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useState } from "react"
 import { ImageLightBox } from "./ImageLightBox"
 
 interface Props {
-    data: DataAnalysis | undefined // Deixar undefined para não precisar definir um estado inicial dentro de useState (muito código desnecessário)
+    data: AnalysisDetails | undefined // Deixar undefined para não precisar definir um estado inicial dentro de useState (muito código desnecessário)
     isOpen: boolean
     onOpenChange: Dispatch<SetStateAction<boolean>>
 }
 
 export const SheetDetailsAnalysis = ({ data, isOpen = false, onOpenChange }: Props) => {
+    const classificacao = data?.classificacao ?? null // null até finalizar ou se a análise falhou
+    const infected = classificacao?.classe === "infectado"
     const [isOpenLightBox, setIsOpenLightBox] = useState(false)
     const [pathLightBox, setPathLightBox] = useState("")
 
@@ -32,7 +35,7 @@ export const SheetDetailsAnalysis = ({ data, isOpen = false, onOpenChange }: Pro
                     <SheetDescription>Mais informações sobre a análise</SheetDescription>
                 </SheetHeader>
 
-                <Tabs className="flex flex-col flex-1 min-h-0">
+                <Tabs defaultValue="details" className="flex flex-col flex-1 min-h-0">
                     <TabsList className="w-full max-w-[90%] mx-auto">
                         <TabsTrigger value="details">Detalhes</TabsTrigger>
                         <TabsTrigger value="actionPlan">Ações imediatas</TabsTrigger>
@@ -53,15 +56,22 @@ export const SheetDetailsAnalysis = ({ data, isOpen = false, onOpenChange }: Pro
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="flex flex-col gap-1">
                                         <Label className="text-xs text-muted-foreground">Status</Label>
-                                        <span className="text-sm font-semibold text-slate-800 capitalize">
-                                            {data?.status}
+                                        <span className="text-sm font-semibold text-slate-800">
+                                            {data ? STATUS_LABEL[data.status] : '---'}
                                         </span>
                                     </div>
 
                                     <div className="flex flex-col gap-1">
                                         <Label className="text-xs text-muted-foreground">Data da Análise</Label>
                                         <span className="text-sm text-slate-600">
-                                            {data?.createdAt ? new Date(data.createdAt).toLocaleDateString('pt-BR') : '---'}
+                                            {data ? formatDate(data.criado_em) : '---'}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex flex-col gap-1">
+                                        <Label className="text-xs text-muted-foreground">Precisão do GPS</Label>
+                                        <span className="text-sm text-slate-600">
+                                            {data?.localizacao ? `± ${Math.round(data.localizacao.precisao)} m` : 'Sem localização'}
                                         </span>
                                     </div>
                                 </div>
@@ -73,13 +83,15 @@ export const SheetDetailsAnalysis = ({ data, isOpen = false, onOpenChange }: Pro
                                     <h4 className="text-sm font-semibold text-slate-900">Resultado do Modelo Visão Computacional</h4>
                                 </div>
 
-                                <div className={`p-3 rounded-lg flex flex-col gap-1 border ${data?.classificacao.classe == "1"
-                                    ? "bg-red-50 border-red-200 text-red-900"
-                                    : "bg-green-50 border-green-200 text-green-900"
+                                <div className={`p-3 rounded-lg flex flex-col gap-1 border ${!classificacao
+                                    ? "bg-slate-50 border-slate-200 text-slate-700"
+                                    : infected
+                                        ? "bg-red-50 border-red-200 text-red-900"
+                                        : "bg-green-50 border-green-200 text-green-900"
                                     }`}>
                                     <Label className="text-xs opacity-80">Diagnóstico de Pinta Preta</Label>
                                     <span className="text-lg font-bold flex items-center gap-1.5">
-                                        {data?.classificacao.classe == "1" ? "Pinta Preta Detectada" : "Fruta Saudável"}
+                                        {classificacao ? CLASSE_LABEL[classificacao.classe] : "Sem resultado"}
                                     </span>
                                 </div>
 
@@ -87,14 +99,14 @@ export const SheetDetailsAnalysis = ({ data, isOpen = false, onOpenChange }: Pro
                                     <div className="flex flex-col gap-1">
                                         <Label className="text-xs text-muted-foreground">Confiança do Modelo</Label>
                                         <span className="text-sm font-semibold text-slate-800">
-                                            {data?.classificacao.confianca ? `${(data?.classificacao.confianca * 100).toFixed(2)}%` : '---'}
+                                            {classificacao ? formatConfidence(classificacao.confianca, 2) : '---'}
                                         </span>
                                     </div>
 
                                     <div className="flex flex-col gap-1">
                                         <Label className="text-xs text-muted-foreground">Tempo de Execução</Label>
                                         <span className="text-sm font-medium text-slate-600">
-                                            {data?.classificacao.tempo_execucao ? `${data.classificacao.tempo_execucao} ms` : '---'}
+                                            {classificacao ? `${classificacao.tempo_execucao} ms` : '---'}
                                         </span>
                                     </div>
                                 </div>
@@ -102,7 +114,7 @@ export const SheetDetailsAnalysis = ({ data, isOpen = false, onOpenChange }: Pro
                                 <div className="flex flex-col gap-1 border-t border-slate-100 pt-3">
                                     <Label className="text-xs text-muted-foreground">Rede Neural Utilizada (CNN)</Label>
                                     <span className="text-xs font-mono text-slate-500 bg-slate-50 p-2 rounded-md border border-slate-100">
-                                        {data?.classificacao.modelo_cnn || 'Não especificado'}
+                                        {classificacao ? `${classificacao.modelo_cnn} · versão ${classificacao.versao_modelo}` : 'Não especificado'}
                                     </span>
                                 </div>
                             </div>
@@ -120,20 +132,21 @@ export const SheetDetailsAnalysis = ({ data, isOpen = false, onOpenChange }: Pro
                                 <ImageLightBox isOpen={isOpenLightBox} onOpenChange={setIsOpenLightBox} path={pathLightBox} />
 
                                 {
-                                    data?.imagem ? ( // Exibe conteúdo em caso de existencia ou não de imagem
+                                    data?.imagens.length ? ( // Exibe conteúdo em caso de existencia ou não de imagem
                                         <div className="grid grid-cols-4 gap-3">
                                             {
-                                                data.imagem.map((item, i) => (
-                                                    <div 
-                                                        key={i} 
-                                                        onClick={() => openLightBox(`http://localhost:8080/${item.caminho}`)} 
+                                                data.imagens.map((item) => (
+                                                    <div
+                                                        key={item.id}
+                                                        onClick={() => openLightBox(item.url)}
                                                         className="relative w-full aspect-square rounded-xl border border-slate-100 overflow-hidden hover:outline-2 transition-all"
                                                     >
+                                                        {/* url assinada pela API: vale por tempo limitado, por isso não é guardada */}
                                                         <Image
-                                                            src={`http://localhost:8080/${item.caminho}`}
+                                                            src={item.url}
                                                             fill
-                                                            alt="Imagem"
-                                                            quality={25}
+                                                            alt={item.nome}
+                                                            unoptimized // host local: o otimizador do Next 16 recusa IP privado
                                                         />
                                                     </div>
                                                 ))
@@ -152,7 +165,7 @@ export const SheetDetailsAnalysis = ({ data, isOpen = false, onOpenChange }: Pro
                         <div className="flex flex-col p-4 gap-4">
                             {
                                 // Doença não detectada
-                                data?.classificacao.classe == "0" && (
+                                classificacao?.classe === "saudavel" && (
                                     <div className="flex flex-col gap-4 flex-1 items-center pb-3">
                                         {/* Card */}
                                         <div className="flex flex-col gap-4 p-4 w-full bg-green-600/5 rounded-xl border border-slate-100">
@@ -179,7 +192,7 @@ export const SheetDetailsAnalysis = ({ data, isOpen = false, onOpenChange }: Pro
                                 )
                             }
                             {
-                                data?.classificacao.classe == "1" && (
+                                classificacao?.classe === "infectado" && (
                                     // Doença detectada
                                     <div className="flex flex-col gap-4 flex-1 items-center pb-3">
                                         {/* Card */}

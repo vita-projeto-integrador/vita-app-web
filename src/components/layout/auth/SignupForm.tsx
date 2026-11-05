@@ -13,8 +13,7 @@ import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { signUpSchema, SignUpData } from "@/schemas/signUp"
-import { createUser } from "@/services/user"
-import { saveSession } from "@/actions/session"
+import { register } from "@/services/auth"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 
@@ -25,8 +24,8 @@ type Step = {
 
 const FORM_STEPS: Step[] = [
     { title: "Insira seu nome", fields: ["firstName", "lastName"] },
-    { title: "Data de nascimento", fields: ["email", "phone"] },
-    { title: "Localização e contato", fields: ["address", "birthDate"] },
+    { title: "Contato", fields: ["email", "phone"] },
+    { title: "Endereço e nascimento", fields: ["address", "birthDate"] },
     { title: "Dados empresariais", fields: ["cnpj"] },
     { title: "Você é um estudante?", fields: ["highSchool", "course"] },
     { title: "Defina sua senha", fields: ["password", "confirmPassword"] },
@@ -52,7 +51,7 @@ export const SignupForm = () => {
         }
     })
 
-    const { handleSubmit, trigger, watch, setValue, clearErrors } = form
+    const { handleSubmit, trigger, watch, setValue, clearErrors, setError } = form
     const isStudent = watch("isStudent")
 
     useEffect(() => {
@@ -76,20 +75,25 @@ export const SignupForm = () => {
 
     const onSubmit = async (data: SignUpData) => {
         setIsSubmiting(true)
-        const response = await createUser(data)
-        
-        if (response.success && response.data.token != undefined) {
-            await saveSession({ // Salvar no cookie
-                token: response.data.token, 
-                name: response.data.user.name, 
-                email: response.data.user.email, 
-                userId: response.data.user.id
-            })
+        const response = await register(data) // a sessão é gravada no servidor
 
-            router.push('/app')
-        } else {
-            alert(response.message)
+        if (response.success) {
+            router.replace('/app')
+            return
         }
+
+        setIsSubmiting(false)
+        const fields = Object.keys(response.fieldErrors) as (keyof SignUpData)[]
+
+        if (fields.length === 0) { // erro geral (ex.: e-mail já cadastrado, API fora do ar)
+            setError("root", { message: response.message })
+            return
+        }
+
+        // erro por campo: marca os inputs e volta para a primeira etapa com erro
+        fields.forEach((field) => setError(field, { message: response.fieldErrors[field] }))
+        const firstStage = FORM_STEPS.findIndex((step) => step.fields.some((field) => fields.includes(field)))
+        if (firstStage >= 0) setStage(firstStage)
     }
 
     return (
@@ -252,6 +256,9 @@ export const SignupForm = () => {
                         </AnimatePresence>
                     </div>
 
+                    {form.formState.errors.root && (
+                        <p className="text-sm text-destructive text-center">{form.formState.errors.root.message}</p>
+                    )}
 
                     <div className="flex items-center justify-between mt-auto">
                         <Button type="button" onClick={decreaseValue} variant={stage > 0 ? "secondary" : "ghost"} disabled={stage === 0}>
